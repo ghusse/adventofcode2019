@@ -15,9 +15,28 @@ if (require.main === module) {
 export async function run(): Promise<string[]> {
 	const input: string = await readFileAsync(join(__dirname, "input.txt"), "utf8");
 
-	const opCodes = resolveProgram(input);
+	const result1 = resolveProgram(input);
+	const result2: { noun: number; verb: number } = findModifications(input, 19690720);
 
-	return [`${opCodes[0]}`];
+	return [`${result1[0]}`, `${100 * result2.noun + result2.verb}`];
+}
+
+function findModifications(input: string, expectedResult: number): { noun: number; verb: number } {
+	const parsed: number[] = input.split(",").map(Number);
+
+	for (let noun = 0; noun < 100; noun++) {
+		for (let verb = 0; verb < 100; verb++) {
+			const newInput = [...parsed];
+			newInput[1] = noun;
+			newInput[2] = verb;
+
+			if (executeProgram(newInput)[0] === expectedResult) {
+				return { noun, verb };
+			}
+		}
+	}
+
+	throw new Error("Result not found");
 }
 
 export function resolveProgram(input: string): number[] {
