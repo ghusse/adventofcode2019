@@ -16,8 +16,8 @@ function day1Suite() {
 
 	function fuelForMassAndFuelTest() {
 		expect(getFuelForMassAndFuel(12)).to.equal(2);
-		// expect(getFuelForMassAndFuel(14)).to.equal(2);
-		// expect(getFuelForMassAndFuel(1969)).to.equal(966);
-		// expect(getFuelForMass(100756)).to.equal(50346);
+		expect(getFuelForMassAndFuel(14)).to.equal(2);
+		expect(getFuelForMassAndFuel(1969)).to.equal(966);
+		expect(getFuelForMassAndFuel(100756)).to.equal(50346);
 	}
 }
