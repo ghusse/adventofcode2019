@@ -17,9 +17,24 @@ export async function run(): Promise<string[]> {
 	const input: string = await readFileAsync(join(__dirname, "input.txt"), "utf8");
 	const instructions: number[] = input.split(",").map((x) => +x);
 
-	const { output } = executeProgram(instructions, 1);
+	const { output: output1 } = executeProgram(instructions, 1);
+	const { output: output2 } = executeProgram(instructions, 5);
 
-	return [`${output.find(Boolean)}`];
+	checkOutput(output1);
+	checkOutput(output2);
+
+	return [`${output1[output1.length - 1]}`, `${output2[output2.length - 1]}`];
+}
+
+function checkOutput(values: number[]) {
+	if (
+		!values.every(
+			(value: number, index: number, allValues: number[]) =>
+				!value || index === allValues.length - 1,
+		)
+	) {
+		throw new Error("Invalid check value");
+	}
 }
 
 export function executeProgram(
@@ -74,6 +89,53 @@ export function executeProgram(
 				const resultPosition: number = getValue(opCodes, position + 1, firstParametersMode);
 				output.push(resultPosition);
 				position += 2;
+				break;
+			}
+			case 5: {
+				const firstParameter: number = getValue(opCodes, position + 1, firstParametersMode);
+				const secondParameter: number = getValue(opCodes, position + 2, secondParameterMode);
+
+				if (firstParameter) {
+					position = secondParameter;
+				} else {
+					position += 3;
+				}
+
+				break;
+			}
+			case 6: {
+				const firstParameter: number = getValue(opCodes, position + 1, firstParametersMode);
+				const secondParameter: number = getValue(opCodes, position + 2, secondParameterMode);
+
+				if (firstParameter === 0) {
+					position = secondParameter;
+				} else {
+					position += 3;
+				}
+
+				break;
+			}
+			case 7: {
+				const firstParameter: number = getValue(opCodes, position + 1, firstParametersMode);
+				const secondParameter: number = getValue(opCodes, position + 2, secondParameterMode);
+				const resultPosition: number = opCodes[position + 3];
+
+				opCodes[resultPosition] = firstParameter < secondParameter ? 1 : 0;
+
+				position += 4;
+
+				break;
+			}
+
+			case 8: {
+				const firstParameter: number = getValue(opCodes, position + 1, firstParametersMode);
+				const secondParameter: number = getValue(opCodes, position + 2, secondParameterMode);
+				const resultPosition: number = opCodes[position + 3];
+
+				opCodes[resultPosition] = firstParameter === secondParameter ? 1 : 0;
+
+				position += 4;
+
 				break;
 			}
 			default:
