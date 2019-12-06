@@ -8,7 +8,7 @@
       "request": "launch",
       "name": "Run",
       "runtimeArgs": ["-r", "ts-node/register"],
-      "args": ["${workspaceFolder}/src/05/index.ts"]
+      "args": ["${workspaceFolder}/src/06/index.ts"]
     },
     {
       "type": "node",
