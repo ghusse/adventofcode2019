@@ -17,8 +17,8 @@ export async function run(): Promise<string[]> {
 	const input: string = await readFileAsync(join(__dirname, "input.txt"), "utf8");
 	const instructions: number[] = input.split(",").map((x) => +x);
 
-	const { output: output1 } = executeProgram(instructions, 1);
-	const { output: output2 } = executeProgram(instructions, 5);
+	const { output: output1 } = executeProgram(instructions, [1]);
+	const { output: output2 } = executeProgram(instructions, [5]);
 
 	checkOutput(output1);
 	checkOutput(output2);
@@ -39,9 +39,10 @@ function checkOutput(values: number[]) {
 
 export function executeProgram(
 	input: number[],
-	inputValue: number,
+	inputValues: number[],
 ): { opCodes: number[]; output: number[] } {
 	const opCodes: number[] = [...input];
+	const inputValuesTemp: number[] = [...inputValues];
 
 	let position: number = 0;
 	const output: number[] = [];
@@ -81,7 +82,13 @@ export function executeProgram(
 			}
 			case 3: {
 				const resultPosition: number = opCodes[position + 1];
-				opCodes[resultPosition] = inputValue;
+				const input = inputValuesTemp.shift();
+
+				if (input === undefined) {
+					throw new Error("Invalid number of inputs");
+				}
+
+				opCodes[resultPosition] = input;
 				position += 2;
 				break;
 			}
