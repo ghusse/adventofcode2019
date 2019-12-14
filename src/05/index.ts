@@ -17,8 +17,8 @@ export async function run(): Promise<string[]> {
 	const input: string = await readFileAsync(join(__dirname, "input.txt"), "utf8");
 	const instructions: number[] = input.split(",").map((x) => +x);
 
-	const { output: output1 } = executeProgram(instructions, [1]);
-	const { output: output2 } = executeProgram(instructions, [5]);
+	const { output: output1 } = executeFullProgram(instructions, [1]);
+	const { output: output2 } = executeFullProgram(instructions, [5]);
 
 	checkOutput(output1);
 	checkOutput(output2);
@@ -37,15 +37,45 @@ function checkOutput(values: number[]) {
 	}
 }
 
-export function executeProgram(
-	input: number[],
+export function executeFullProgram(
+	program: number[],
 	inputValues: number[],
 ): { opCodes: number[]; output: number[] } {
-	const opCodes: number[] = [...input];
-	const inputValuesTemp: number[] = [...inputValues];
-
-	let position: number = 0;
 	const output: number[] = [];
+	let opCodes: number[] = program;
+	let position: number = 0;
+	let remainingInputValues: number[] = inputValues;
+
+	do {
+		let result = executeProgram(opCodes, position, remainingInputValues);
+		remainingInputValues = result.remainingInputValues;
+		opCodes = result.opCodes;
+		position = result.nextPosition;
+
+		if (result.output !== undefined) {
+			output.push(result.output);
+		} else {
+			break;
+		}
+	} while (true);
+
+	return { opCodes, output };
+}
+
+export function executeProgram(
+	program: number[],
+	startPosition: number,
+	inputValues: number[],
+): {
+	opCodes: number[];
+	output: number | undefined;
+	nextPosition: number;
+	remainingInputValues: number[];
+} {
+	const opCodes: number[] = [...program];
+	const remainingInputValues: number[] = [...inputValues];
+
+	let position: number = startPosition;
 
 	while (position >= 0 && position < opCodes.length) {
 		const instruction: number = opCodes[position];
@@ -82,21 +112,24 @@ export function executeProgram(
 			}
 			case 3: {
 				const resultPosition: number = opCodes[position + 1];
-				const input = inputValuesTemp.shift();
 
-				if (input === undefined) {
+				if (!remainingInputValues.length) {
 					throw new Error("Invalid number of inputs");
 				}
 
-				opCodes[resultPosition] = input;
+				const input = remainingInputValues.shift();
+				opCodes[resultPosition] = input!;
 				position += 2;
 				break;
 			}
 			case 4: {
 				const resultPosition: number = getValue(opCodes, position + 1, firstParametersMode);
-				output.push(resultPosition);
-				position += 2;
-				break;
+				return {
+					opCodes,
+					output: resultPosition,
+					nextPosition: position + 2,
+					remainingInputValues,
+				};
 			}
 			case 5: {
 				const firstParameter: number = getValue(opCodes, position + 1, firstParametersMode);
@@ -150,7 +183,12 @@ export function executeProgram(
 		}
 	}
 
-	return { opCodes, output };
+	return {
+		opCodes,
+		output: undefined,
+		nextPosition: position,
+		remainingInputValues,
+	};
 }
 
 function getValue(opCodes: number[], position: number, mode: number): number {
