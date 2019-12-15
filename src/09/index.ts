@@ -18,7 +18,8 @@ export async function run(): Promise<string[]> {
 	const input: string = await readFileAsync(join(__dirname, "input.txt"), "utf8");
 	const instructions: bigint[] = input.split(",").map((x) => BigInt(x));
 
-	const result = executeFullProgram(instructions, [1n]);
+	const result1 = executeFullProgram(instructions, [1n]);
+	const result2 = executeFullProgram(instructions, [2n]);
 
-	return [`${result.output.join(",")}`];
+	return [`${result1.output.join(",")}`, `${result2.output.join(",")}`];
 }
