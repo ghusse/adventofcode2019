@@ -11,26 +11,26 @@ export async function run(): Promise<string[]> {
 	return [`${resolve1(input)}`, `${resolve2(input)}`];
 }
 
-export function resolve1(input: string): number {
-	const possiblePhaseSettings = generateCombinations([0, 1, 2, 3, 4]);
-	const program = input.split(",").map((x) => +x);
+export function resolve1(input: string): bigint {
+	const possiblePhaseSettings = generateCombinations([0n, 1n, 2n, 3n, 4n]);
+	const program = input.split(",").map((x) => BigInt(x));
 
 	return possiblePhaseSettings
-		.map((phaseSettings: number[]) => executeForPhaseSetting(program, phaseSettings))
-		.reduce((x, y) => Math.max(x, y));
+		.map((phaseSettings: bigint[]) => executeForPhaseSetting(program, phaseSettings))
+		.reduce((x, y) => (x > y ? x : y));
 }
 
-export function resolve2(input: string): number {
-	const possiblePhaseSettings = generateCombinations([5, 6, 7, 8, 9]);
-	const program = input.split(",").map((x) => +x);
+export function resolve2(input: string): bigint {
+	const possiblePhaseSettings = generateCombinations([5n, 6n, 7n, 8n, 9n]);
+	const program = input.split(",").map((x) => BigInt(x));
 
 	return possiblePhaseSettings
-		.map((phaseSettings: number[]) => executeInChainForPhaseSetting(program, phaseSettings))
-		.reduce((x, y) => Math.max(x, y));
+		.map((phaseSettings: bigint[]) => executeInChainForPhaseSetting(program, phaseSettings))
+		.reduce((x, y) => (x > y ? x : y));
 }
 
-export function executeForPhaseSetting(program: number[], phaseSettings: number[]): number {
-	return phaseSettings.reduce((output: number, phaseSetting: number): number => {
+export function executeForPhaseSetting(program: bigint[], phaseSettings: bigint[]): bigint {
+	return phaseSettings.reduce((output: bigint, phaseSetting: bigint): bigint => {
 		const { output: result } = executeFullProgram(program, [phaseSetting, output]);
 
 		if (result.length !== 1) {
@@ -38,21 +38,21 @@ export function executeForPhaseSetting(program: number[], phaseSettings: number[
 		}
 
 		return result[0];
-	}, 0);
+	}, 0n);
 }
 
-export function executeInChainForPhaseSetting(program: number[], phaseSetting: number[]): number {
-	const programs = phaseSetting.map(() => [...program]);
-	const inputs = phaseSetting.map((phase: number) => [phase]);
+export function executeInChainForPhaseSetting(program: bigint[], phaseSetting: bigint[]): bigint {
+	const programs: bigint[][] = phaseSetting.map(() => [...program]);
+	const inputs: bigint[][] = phaseSetting.map((phase: bigint) => [phase]);
 	const positions = phaseSetting.map(() => 0);
 
-	let lastOutput: number | undefined;
+	let lastOutput: bigint | undefined;
 	let index = 0;
 
-	inputs[0].push(0);
+	inputs[0].push(0n);
 
 	do {
-		const result = executeProgram(programs[index], positions[index], inputs[index]);
+		const result = executeProgram(programs[index], positions[index], 0, inputs[index]);
 
 		if (result.output === undefined) {
 			break;
@@ -73,7 +73,7 @@ export function executeInChainForPhaseSetting(program: number[], phaseSetting: n
 	return lastOutput;
 }
 
-function generateCombinations(possibleValues: number[]): number[][] {
+function generateCombinations(possibleValues: bigint[]): bigint[][] {
 	if (possibleValues.length === 1) {
 		return [possibleValues];
 	}

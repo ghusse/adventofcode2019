@@ -15,80 +15,84 @@ function programSuite() {
 	it("should correctly execute the larger example", largerTest);
 
 	function firstProgramTest() {
-		const program: number[] = "1002,4,3,4,33".split(",").map((x) => +x);
+		const program: bigint[] = "1002,4,3,4,33".split(",").map((x) => BigInt(x));
 
-		const result = executeFullProgram(program, [1]);
+		const result = executeFullProgram(program, [1n]);
 
-		expect(result.opCodes).to.eql([1002, 4, 3, 4, 99]);
+		expect(result.opCodes).to.eql([1002n, 4n, 3n, 4n, 99n]);
 	}
 
 	function secondProgramTest() {
-		const program: number[] = "1101,100,-1,4,0".split(",").map((x) => +x);
+		const program: bigint[] = "1101,100,-1,4,0".split(",").map((x) => BigInt(x));
 
-		const result = executeFullProgram(program, [1]);
+		const result = executeFullProgram(program, [1n]);
 
-		expect(result.opCodes).to.eql([1101, 100, -1, 4, 99]);
+		expect(result.opCodes).to.eql([1101n, 100n, -1n, 4n, 99n]);
 	}
 
 	function thirdProgramTest() {
-		const program: number[] = "3,9,8,9,10,9,4,9,99,-1,8".split(",").map((x) => +x);
+		const program: bigint[] = "3,9,8,9,10,9,4,9,99,-1,8".split(",").map((x) => BigInt(x));
 
-		expect(executeFullProgram(program, [9]).output[0]).to.eq(0);
-		expect(executeFullProgram(program, [8]).output[0]).to.eq(1);
-		expect(executeFullProgram(program, [7]).output[0]).to.eq(0);
+		expect(executeFullProgram(program, [9n]).output[0]).to.eq(0n);
+		expect(executeFullProgram(program, [8n]).output[0]).to.eq(1n);
+		expect(executeFullProgram(program, [7n]).output[0]).to.eq(0n);
 	}
 
 	function fourthProgramTest() {
-		const program: number[] = "3,9,7,9,10,9,4,9,99,-1,8".split(",").map((x) => +x);
+		const program: bigint[] = "3,9,7,9,10,9,4,9,99,-1,8".split(",").map((x) => BigInt(x));
 
-		expect(executeFullProgram(program, [9]).output[0]).to.eq(0);
-		expect(executeFullProgram(program, [8]).output[0]).to.eq(0);
-		expect(executeFullProgram(program, [7]).output[0]).to.eq(1);
-		expect(executeFullProgram(program, [6]).output[0]).to.eq(1);
+		expect(executeFullProgram(program, [9n]).output[0]).to.eq(0n);
+		expect(executeFullProgram(program, [8n]).output[0]).to.eq(0n);
+		expect(executeFullProgram(program, [7n]).output[0]).to.eq(1n);
+		expect(executeFullProgram(program, [6n]).output[0]).to.eq(1n);
 	}
 
 	function fifthProgramTest() {
-		const program: number[] = "3,3,1108,-1,8,3,4,3,99".split(",").map((x) => +x);
+		const program: bigint[] = "3,3,1108,-1,8,3,4,3,99".split(",").map((x) => BigInt(x));
 
-		expect(executeFullProgram(program, [9]).output[0]).to.eq(0);
-		expect(executeFullProgram(program, [8]).output[0]).to.eq(1);
-		expect(executeFullProgram(program, [7]).output[0]).to.eq(0);
+		expect(executeFullProgram(program, [9n]).output[0]).to.eq(0n);
+		expect(executeFullProgram(program, [8n]).output[0]).to.eq(1n);
+		expect(executeFullProgram(program, [7n]).output[0]).to.eq(0n);
 	}
 
 	function sixthProgramTest() {
-		const program: number[] = "3,3,1107,-1,8,3,4,3,99".split(",").map((x) => +x);
+		const program: bigint[] = "3,3,1107,-1,8,3,4,3,99".split(",").map((x) => BigInt(x));
 
-		expect(executeFullProgram(program, [9]).output[0]).to.eq(0);
-		expect(executeFullProgram(program, [8]).output[0]).to.eq(0);
-		expect(executeFullProgram(program, [7]).output[0]).to.eq(1);
-		expect(executeFullProgram(program, [6]).output[0]).to.eq(1);
+		expect(executeFullProgram(program, [9n]).output[0]).to.eq(0n);
+		expect(executeFullProgram(program, [8n]).output[0]).to.eq(0n);
+		expect(executeFullProgram(program, [7n]).output[0]).to.eq(1n);
+		expect(executeFullProgram(program, [6n]).output[0]).to.eq(1n);
 	}
 
 	function jumpTest1() {
-		const program: number[] = "3,12,6,12,15,1,13,14,13,4,13,99,-1,0,1,9".split(",").map((x) => +x);
+		const program: bigint[] = "3,12,6,12,15,1,13,14,13,4,13,99,-1,0,1,9"
+			.split(",")
+			.map((x) => BigInt(x));
 
-		expect(executeFullProgram(program, [0]).output[0]).to.eq(0);
-		expect(executeFullProgram(program, [1]).output[0]).to.eq(1);
-		expect(executeFullProgram(program, [-1]).output[0]).to.eq(1);
+		expect(executeFullProgram(program, [0n]).output[0]).to.eq(0n);
+		expect(executeFullProgram(program, [1n]).output[0]).to.eq(1n);
+		expect(executeFullProgram(program, [-1n]).output[0]).to.eq(1n);
 	}
 
 	function jumpTest2() {
-		const program: number[] = "3,3,1105,-1,9,1101,0,0,12,4,12,99,1".split(",").map((x) => +x);
+		const program: bigint[] = "3,3,1105,-1,9,1101,0,0,12,4,12,99,1"
+			.split(",")
+			.map((x) => BigInt(x));
 
-		expect(executeFullProgram(program, [0]).output[0]).to.eq(0);
-		expect(executeFullProgram(program, [1]).output[0]).to.eq(1);
-		expect(executeFullProgram(program, [-1]).output[0]).to.eq(1);
+		expect(executeFullProgram(program, [0n]).output[0]).to.eq(0n);
+		expect(executeFullProgram(program, [1n]).output[0]).to.eq(1n);
+		expect(executeFullProgram(program, [-1n]).output[0]).to.eq(1n);
 	}
 
 	function largerTest() {
-		const program: number[] = `3,21,1008,21,8,20,1005,20,22,107,8,21,20,1006,20,31,
+		const program: bigint[] = `3,21,1008,21,8,20,1005,20,22,107,8,21,20,1006,20,31,
                                 1106,0,36,98,0,0,1002,21,125,20,4,20,1105,1,46,104,
                                 999,1105,1,46,1101,1000,1,20,4,20,1105,1,46,98,99`
 			.split(",")
-			.map((x) => +x.trim());
+			.map((x) => BigInt(x.trim()));
 
-		expect(executeFullProgram(program, [7]).output[0]).to.eq(999);
-		expect(executeFullProgram(program, [8]).output[0]).to.eq(1000);
-		expect(executeFullProgram(program, [9]).output[0]).to.eq(1001);
+		expect(executeFullProgram(program, [7n]).output[0]).to.eq(999n);
+		expect(executeFullProgram(program, [8n]).output[0]).to.eq(1000n);
+		expect(executeFullProgram(program, [9n]).output[0]).to.eq(1001n);
 	}
 }

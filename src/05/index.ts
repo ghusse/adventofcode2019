@@ -15,10 +15,10 @@ if (require.main === module) {
 
 export async function run(): Promise<string[]> {
 	const input: string = await readFileAsync(join(__dirname, "input.txt"), "utf8");
-	const instructions: number[] = input.split(",").map((x) => +x);
+	const instructions: bigint[] = input.split(",").map((x) => BigInt(x));
 
-	const { output: output1 } = executeFullProgram(instructions, [1]);
-	const { output: output2 } = executeFullProgram(instructions, [5]);
+	const { output: output1 } = executeFullProgram(instructions, [1n]);
+	const { output: output2 } = executeFullProgram(instructions, [5n]);
 
 	checkOutput(output1);
 	checkOutput(output2);
@@ -26,10 +26,10 @@ export async function run(): Promise<string[]> {
 	return [`${output1[output1.length - 1]}`, `${output2[output2.length - 1]}`];
 }
 
-function checkOutput(values: number[]) {
+function checkOutput(values: bigint[]) {
 	if (
 		!values.every(
-			(value: number, index: number, allValues: number[]) =>
+			(value: bigint, index: number, allValues: bigint[]) =>
 				!value || index === allValues.length - 1,
 		)
 	) {
@@ -38,19 +38,21 @@ function checkOutput(values: number[]) {
 }
 
 export function executeFullProgram(
-	program: number[],
-	inputValues: number[],
-): { opCodes: number[]; output: number[] } {
-	const output: number[] = [];
-	let opCodes: number[] = program;
+	program: bigint[],
+	inputValues: bigint[],
+): { opCodes: bigint[]; output: bigint[] } {
+	const output: bigint[] = [];
+	let opCodes: bigint[] = program.map((x) => BigInt(x));
 	let position: number = 0;
-	let remainingInputValues: number[] = inputValues;
+	let remainingInputValues: bigint[] = inputValues.map((x) => BigInt(x));
+	let relativeBase: number = 0;
 
 	do {
-		let result = executeProgram(opCodes, position, remainingInputValues);
+		let result = executeProgram(opCodes, position, relativeBase, remainingInputValues);
 		remainingInputValues = result.remainingInputValues;
 		opCodes = result.opCodes;
 		position = result.nextPosition;
+		relativeBase = result.relativeBase;
 
 		if (result.output !== undefined) {
 			output.push(result.output);
@@ -63,119 +65,191 @@ export function executeFullProgram(
 }
 
 export function executeProgram(
-	program: number[],
+	program: bigint[],
 	startPosition: number,
-	inputValues: number[],
+	startRelativeBase: number,
+	inputValues: bigint[],
 ): {
-	opCodes: number[];
-	output: number | undefined;
+	opCodes: bigint[];
+	output: bigint | undefined;
 	nextPosition: number;
-	remainingInputValues: number[];
+	relativeBase: number;
+	remainingInputValues: bigint[];
 } {
-	const opCodes: number[] = [...program];
-	const remainingInputValues: number[] = [...inputValues];
+	const opCodes: bigint[] = [...program];
+	const remainingInputValues: bigint[] = [...inputValues];
 
 	let position: number = startPosition;
+	let relativeBase: number = startRelativeBase;
 
 	while (position >= 0 && position < opCodes.length) {
-		const instruction: number = opCodes[position];
-		const thirdParameterMode = Math.floor(instruction * 1e-4);
-		const secondParameterMode = Math.floor(instruction * 1e-3) - thirdParameterMode * 10;
+		const instruction: bigint = opCodes[position];
+		const thirdParameterMode = instruction / 10000n;
+		const secondParameterMode = instruction / 1000n - thirdParameterMode * 10n;
 		const firstParametersMode =
-			Math.floor(instruction * 1e-2) - secondParameterMode * 10 - thirdParameterMode * 100;
-		const opCode =
+			instruction / 100n - secondParameterMode * 10n - thirdParameterMode * 100n;
+		const opCode: bigint =
 			instruction -
-			firstParametersMode * 100 -
-			secondParameterMode * 1000 -
-			thirdParameterMode * 10000;
+			firstParametersMode * 100n -
+			secondParameterMode * 1000n -
+			thirdParameterMode * 10000n;
 
-		if (opCode === 99) {
+		if (opCode === 99n) {
 			break;
 		}
 
 		switch (opCode) {
-			case 1: {
-				const resultPosition: number = opCodes[position + 3];
-				const operand1: number = getValue(opCodes, position + 1, firstParametersMode);
-				const operand2: number = getValue(opCodes, position + 2, secondParameterMode);
-				opCodes[resultPosition] = operand1 + operand2;
-				position += 4;
-				break;
-			}
-			case 2: {
-				const resultPosition: number = opCodes[position + 3];
-				const operand1: number = getValue(opCodes, position + 1, firstParametersMode);
-				const operand2: number = getValue(opCodes, position + 2, secondParameterMode);
-				opCodes[resultPosition] = operand1 * operand2;
-				position += 4;
-				break;
-			}
-			case 3: {
-				const resultPosition: number = opCodes[position + 1];
+			case 1n: {
+				const operand1: bigint = getValue(opCodes, position + 1, relativeBase, firstParametersMode);
+				const operand2: bigint = getValue(opCodes, position + 2, relativeBase, secondParameterMode);
 
+				writeTo(opCodes, operand1 + operand2, position + 3, relativeBase, thirdParameterMode);
+
+				position += 4;
+				break;
+			}
+			case 2n: {
+				const operand1: bigint = getValue(opCodes, position + 1, relativeBase, firstParametersMode);
+				const operand2: bigint = getValue(opCodes, position + 2, relativeBase, secondParameterMode);
+
+				writeTo(opCodes, operand1 * operand2, position + 3, relativeBase, thirdParameterMode);
+
+				position += 4;
+				break;
+			}
+			case 3n: {
 				if (!remainingInputValues.length) {
 					throw new Error("Invalid number of inputs");
 				}
 
 				const input = remainingInputValues.shift();
-				opCodes[resultPosition] = input!;
+				writeTo(opCodes, input!, position + 1, relativeBase, firstParametersMode);
+
 				position += 2;
 				break;
 			}
-			case 4: {
-				const resultPosition: number = getValue(opCodes, position + 1, firstParametersMode);
+			case 4n: {
+				const resultPosition: bigint = getValue(
+					opCodes,
+					position + 1,
+					relativeBase,
+					firstParametersMode,
+				);
 				return {
 					opCodes,
 					output: resultPosition,
 					nextPosition: position + 2,
 					remainingInputValues,
+					relativeBase,
 				};
 			}
-			case 5: {
-				const firstParameter: number = getValue(opCodes, position + 1, firstParametersMode);
-				const secondParameter: number = getValue(opCodes, position + 2, secondParameterMode);
+			case 5n: {
+				const firstParameter: bigint = getValue(
+					opCodes,
+					position + 1,
+					relativeBase,
+					firstParametersMode,
+				);
+				const secondParameter: bigint = getValue(
+					opCodes,
+					position + 2,
+					relativeBase,
+					secondParameterMode,
+				);
 
 				if (firstParameter) {
-					position = secondParameter;
+					position = Number(secondParameter);
 				} else {
 					position += 3;
 				}
 
 				break;
 			}
-			case 6: {
-				const firstParameter: number = getValue(opCodes, position + 1, firstParametersMode);
-				const secondParameter: number = getValue(opCodes, position + 2, secondParameterMode);
+			case 6n: {
+				const firstParameter: bigint = getValue(
+					opCodes,
+					position + 1,
+					relativeBase,
+					firstParametersMode,
+				);
+				const secondParameter: bigint = getValue(
+					opCodes,
+					position + 2,
+					relativeBase,
+					secondParameterMode,
+				);
 
-				if (firstParameter === 0) {
-					position = secondParameter;
+				if (firstParameter === 0n) {
+					position = Number(secondParameter);
 				} else {
 					position += 3;
 				}
 
 				break;
 			}
-			case 7: {
-				const firstParameter: number = getValue(opCodes, position + 1, firstParametersMode);
-				const secondParameter: number = getValue(opCodes, position + 2, secondParameterMode);
-				const resultPosition: number = opCodes[position + 3];
+			case 7n: {
+				const firstParameter: bigint = getValue(
+					opCodes,
+					position + 1,
+					relativeBase,
+					firstParametersMode,
+				);
+				const secondParameter: bigint = getValue(
+					opCodes,
+					position + 2,
+					relativeBase,
+					secondParameterMode,
+				);
 
-				opCodes[resultPosition] = firstParameter < secondParameter ? 1 : 0;
+				writeTo(
+					opCodes,
+					firstParameter < secondParameter ? 1n : 0n,
+					position + 3,
+					relativeBase,
+					thirdParameterMode,
+				);
 
 				position += 4;
 
 				break;
 			}
 
-			case 8: {
-				const firstParameter: number = getValue(opCodes, position + 1, firstParametersMode);
-				const secondParameter: number = getValue(opCodes, position + 2, secondParameterMode);
-				const resultPosition: number = opCodes[position + 3];
+			case 8n: {
+				const firstParameter: bigint = getValue(
+					opCodes,
+					position + 1,
+					relativeBase,
+					firstParametersMode,
+				);
+				const secondParameter: bigint = getValue(
+					opCodes,
+					position + 2,
+					relativeBase,
+					secondParameterMode,
+				);
 
-				opCodes[resultPosition] = firstParameter === secondParameter ? 1 : 0;
+				writeTo(
+					opCodes,
+					firstParameter === secondParameter ? 1n : 0n,
+					position + 3,
+					relativeBase,
+					thirdParameterMode,
+				);
 
 				position += 4;
 
+				break;
+			}
+
+			case 9n: {
+				const firstParameter: bigint = getValue(
+					opCodes,
+					position + 1,
+					relativeBase,
+					firstParametersMode,
+				);
+				relativeBase += Number(firstParameter);
+				position += 2;
 				break;
 			}
 			default:
@@ -187,17 +261,41 @@ export function executeProgram(
 		opCodes,
 		output: undefined,
 		nextPosition: position,
+		relativeBase,
 		remainingInputValues,
 	};
 }
 
-function getValue(opCodes: number[], position: number, mode: number): number {
+function getValue(opCodes: bigint[], position: number, relativeBase: number, mode: bigint): bigint {
 	switch (mode) {
-		case 0:
-			return opCodes[opCodes[position]];
-		case 1:
-			return opCodes[position];
+		case 0n:
+			return opCodes[Number(opCodes[position])] || 0n;
+		case 1n:
+			return opCodes[position] || 0n;
+		case 2n:
+			return opCodes[Number(opCodes[position]) + relativeBase] || 0n;
 		default:
 			throw new Error(`Invalid mode ${mode}`);
+	}
+}
+
+function writeTo(
+	opCodes: bigint[],
+	value: bigint,
+	position: number,
+	relativeBase: number,
+	mode: bigint,
+): void {
+	switch (mode) {
+		case 0n: {
+			opCodes[Number(opCodes[position])] = value;
+			break;
+		}
+		case 1n: {
+			throw new Error("Cannot write in immediate mode");
+		}
+		case 2n: {
+			opCodes[Number(opCodes[position]) + relativeBase] = value;
+		}
 	}
 }

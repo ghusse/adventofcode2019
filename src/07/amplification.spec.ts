@@ -10,14 +10,14 @@ function amplificationSuite() {
 	function part1Suite() {
 		it(
 			"should return 43210 in the first example",
-			testResolve1.bind(undefined, "3,15,3,16,1002,16,10,16,1,16,15,15,4,15,99,0,0", 43210),
+			testResolve1.bind(undefined, "3,15,3,16,1002,16,10,16,1,16,15,15,4,15,99,0,0", 43210n),
 		);
 		it(
 			"should return 54321 in the second example",
 			testResolve1.bind(
 				undefined,
 				"3,23,3,24,1002,24,10,24,1002,23,-1,23,101,5,23,23,1,24,23,23,4,23,99,0,0",
-				54321,
+				54321n,
 			),
 		);
 		it(
@@ -25,7 +25,7 @@ function amplificationSuite() {
 			testResolve1.bind(
 				undefined,
 				"3,31,3,32,1002,32,10,32,1001,31,-2,31,1007,31,0,33,1002,33,7,33,1,33,31,31,1,32,31,31,4,31,99,0,0,0",
-				65210,
+				65210n,
 			),
 		);
 	}
@@ -40,34 +40,34 @@ function amplificationSuite() {
 
 		it(
 			"should return 139629729 when executing the first example with the optimal phase settings",
-			testExecute2.bind(undefined, firstExample, [9, 8, 7, 6, 5], 139629729),
+			testExecute2.bind(undefined, firstExample, [9n, 8n, 7n, 6n, 5n], 139629729n),
 		);
 		it(
 			"should return 139629729 in the first example",
-			testResolve2.bind(undefined, firstExample, 139629729),
+			testResolve2.bind(undefined, firstExample, 139629729n),
 		);
 
 		it(
 			"should return 18216 when executing the second example with the optimal phase settings",
-			testExecute2.bind(undefined, secondExample, [9, 7, 8, 5, 6], 18216),
+			testExecute2.bind(undefined, secondExample, [9n, 7n, 8n, 5n, 6n], 18216n),
 		);
 		it(
 			"should return 18216 in the second example",
-			testResolve2.bind(undefined, secondExample, 18216),
+			testResolve2.bind(undefined, secondExample, 18216n),
 		);
 	}
 }
 
-function testResolve1(input: string, expectedResult: number) {
+function testResolve1(input: string, expectedResult: bigint) {
 	expect(resolve1(input)).to.eq(expectedResult);
 }
 
-function testExecute2(input: string, phaseSetting: number[], expectedResult: number) {
-	const program = input.split(",").map((x) => +x.trim());
+function testExecute2(input: string, phaseSetting: bigint[], expectedResult: bigint) {
+	const program = input.split(",").map((x) => BigInt(x.trim()));
 
 	expect(executeInChainForPhaseSetting(program, phaseSetting)).to.eq(expectedResult);
 }
 
-function testResolve2(input: string, expectedResult: number) {
+function testResolve2(input: string, expectedResult: bigint) {
 	expect(resolve2(input)).to.eq(expectedResult);
 }
